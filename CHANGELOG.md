@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.1.0 — 2026-09-27
+本文件记录 `@zhengjunyao/dsh-mcp-manager` 的每个发布版本。
+格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)；版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
+
+## [Unreleased]
+
+## [0.1.0] - 2026-09-27
 
 首个版本。自建于 `@wingsky-1/dsh-mcp-manager` 被卸载之后（它用核心 `tools.restrict()` 逐个工具名调和
 可见性，每次调用都重算整个 registry view，把 web 宿主压到 CPU 94.7% / 端口 8 秒无响应 / JS 堆 1080 MB）。

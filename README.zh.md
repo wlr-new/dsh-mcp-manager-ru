@@ -1,5 +1,7 @@
 # dsh-mcp-manager
 
+[中文](README.zh.md) · [English](README.md)
+
 > DeepSeek Harness 的 **MCP 服务器管理器**：在 Web 设置页或直接让 agent 增删改查 MCP 服务器，
 > **连接与断开都在运行时完成，不需要重启 DSH**。
 

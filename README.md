@@ -1,5 +1,7 @@
 # dsh-mcp-manager
 
+[English](README.md) · [中文](README.zh.md)
+
 > **MCP server manager for DeepSeek Harness.** Add, edit, enable and test Model Context Protocol
 > servers from the Web settings page or from agent tools — connected and disconnected **at runtime,
 > with no DSH restart**.
