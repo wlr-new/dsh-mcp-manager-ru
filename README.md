@@ -24,16 +24,65 @@ makes it live:
 Two transports: **stdio** (a local child process: `command` / `args` / `env` / `cwd`) and
 **Streamable HTTP** (a remote URL: `url` / `headers`).
 
-## Install
+## Getting started
 
-```bash
-dsh plugin --profile web add @zhengjunyao/dsh-mcp-manager
-# or from a checkout
-dsh plugin --profile web add link:/path/to/dsh-mcp-manager
-```
+> **No restart is needed at any point.** Adding the plugin to a profile makes the host reload its
+> plugin tree by itself (`dsh.profile.patchReload` is unset here, which means live reload); you only
+> need to **refresh the browser page** to see the panel.
 
-Restart DSH **once** after installing (the host half has to be loaded); after that, nothing here
-needs a restart.
+1. **Install the plugin** — run:
+
+   ```bash
+   dsh plugin --profile web add @zhengjunyao/dsh-mcp-manager
+   # from a checkout: dsh plugin --profile web add link:/path/to/dsh-mcp-manager
+   ```
+
+   Expected: the command ends with a line reading `+ @zhengjunyao/dsh-mcp-manager`, and the profile's
+   dependencies and load list both contain it.
+
+2. **Open the “MCP 管理” card** — refresh the Web GUI, open **Settings** in the left sidebar, and find
+   the **MCP 管理** card.
+
+   Expected: the card shows a master switch, the server list, and a phase badge per server
+   (`active` / `starting` / `waiting` / `error` / `stopped`).
+
+> 📷 **【Screenshot 2】Starting point: where the “MCP 管理” card lives and what it looks like**
+> How to capture: refresh the Web GUI → Settings in the left sidebar → scroll to the “MCP 管理” card → stop with the whole card visible (title + master switch + server list in one frame)
+> Redaction: if servers already exist, **blur server names and any local paths in commands**
+> Replace: swap this whole block for `![MCP manager settings card](image-url)`
+
+3. **Add a server** — click **Add** in the card, give it a name (it becomes the tool prefix
+   `mcp__<name>__`), pick a transport (stdio → command, Streamable HTTP → URL), and save.
+
+   Expected: the server appears immediately and its badge moves from `starting` to `active`; on
+   failure it stays at `error` with the reason shown next to it.
+
+> 📷 **【Screenshot 3】Key action: the add form and which fields matter**
+> How to capture: click “Add” → fill the form (name + transport + command/URL) → stop before saving
+> Redaction: **blur local paths, domains and tokens** in the command or URL
+> Replace: swap this whole block for `![Adding an MCP server](image-url)`
+
+4. **Confirm the tools really registered** — look at the server's **tool count** and expand its tool
+   names, or simply ask the agent to call `mcp_manager_list`.
+
+   Expected: tool count > 0, names shaped like `mcp__<name>__<tool>`, and those tools are **callable
+   by the agent right away**.
+
+> 📷 **【Screenshot 4】The step people get stuck on: proof that it connected and registered tools**
+> How to capture: server in `active` → expand its tool names → stop with **badge, tool count and several `mcp__…__…` names visible at once**
+> Redaction: tool names are usually fine; blur server names and paths if they carry personal data
+> Replace: swap this whole block for `![Server connected with tools registered](image-url)`
+
+5. **Probe it once** (optional but recommended) — click **Test** on that server, or have the agent call
+   `mcp_manager_test`; you can also test a **draft** that is never written to disk.
+
+   Expected: a success message, or a failure that names the cause (command not found / port closed /
+   auth failed), so you can fix it directly.
+
+> 📷 **【Screenshot 5】End state: one server going from config to usable**
+> How to capture: stop at the success message after a test (or at the `mcp_manager_list` result on the agent side)
+> Redaction: none (blur any URL or token)
+> Replace: swap this whole block for `![Test connection succeeded](image-url)`
 
 ## Usage
 
