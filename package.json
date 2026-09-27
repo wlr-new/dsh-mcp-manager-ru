@@ -1,6 +1,6 @@
 {
   "name": "@zhengjunyao/dsh-mcp-manager",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server manager for DeepSeek Harness: add, edit, enable and test stdio / Streamable HTTP MCP servers from the Web settings page and from agent tools, connected and disconnected at runtime without restarting DSH",
   "type": "module",
   "main": "lib/index.js",

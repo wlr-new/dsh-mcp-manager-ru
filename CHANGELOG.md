@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-27
+
+### 其它 (Changed)
+
+- docs(readme): correct the restart claim and add guided setup steps
+
+### 兼容性 (Compatibility)
+
+- DSH：`>=0.1.5-rc.1`
+- Node：`^22.19.0 || >=24.0.0`
+- DSH peer：^0.1.0-rc.6 || ^0.1.1-rc.1 || ^0.1.2-alpha.1 || ^0.1.5-rc.1 || ^0.1.5-rc.2 || ^0.1.5-rc.3 || ^0.1.7-rc.1 || ^0.1.7-rc.2
+
 ## [0.1.0] - 2026-09-27
 
 首个版本。自建于 `@wingsky-1/dsh-mcp-manager` 被卸载之后（它用核心 `tools.restrict()` 逐个工具名调和
