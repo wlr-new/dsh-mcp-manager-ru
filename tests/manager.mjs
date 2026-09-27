@@ -180,18 +180,34 @@ test('importing never overwrites an existing definition', async () => {
   try {
     await h.manager.addServer({ name: 'keep', command: 'original', enabled: false })
     const { writeFileSync } = await import('node:fs')
-    const file = join(h.home, 'mcp-servers.json')
+    const file = join(h.home, '@wingsky-1', 'dsh-mcp-manager', 'mcp.json')
+    const { mkdirSync } = await import('node:fs')
+    mkdirSync(join(h.home, '@wingsky-1', 'dsh-mcp-manager'), { recursive: true })
     writeFileSync(file, JSON.stringify({
       servers: [
         { name: 'keep', command: 'IMPOSTOR' },
         { name: 'fresh', command: 'node', enabled: false },
       ],
     }), 'utf8')
-    const result = await h.manager.importFrom(file)
+    const result = await h.manager.importFrom()
     assert.equal(result.ok, true)
+    assert.match(result.message, /mcp\.json/)
     const names = h.manager.snapshot().servers.map((server) => server.name).sort()
     assert.deepEqual(names, ['fresh', 'keep'])
     assert.equal(h.manager.server('keep')?.command, 'original', 'the existing definition is untouched')
+  } finally {
+    h.cleanup()
+  }
+})
+
+test('import reports every location it tried when none exists', async () => {
+  const h = harness()
+  try {
+    const result = await h.manager.importFrom()
+    assert.equal(result.ok, false)
+    assert.match(result.message, /没有找到可导入的文件/)
+    // The replaced package's real layout must be among the candidates.
+    assert.match(result.message, /@wingsky-1/)
   } finally {
     h.cleanup()
   }

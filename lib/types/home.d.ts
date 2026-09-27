@@ -24,12 +24,17 @@ export declare function pluginPath(override: string | undefined, ...segments: st
 /** The plugin's own settings file: server definitions plus plugin switches. */
 export declare function configPath(home?: string): string;
 /**
- * Locations a previous MCP manager may have left behind, newest first.
+ * Locations a previous MCP manager may have left behind, best first.
  *
- * `$DSH_HOME/mcp-servers.json` is the layout the pre-existing npm package
- * `dsh-mcp-manager` uses; the seeded name list lets a user migrate with one
- * click instead of retyping every server. Nothing is written here — these are
- * read-only import sources.
+ * The first entry is the real one: `@wingsky-1/dsh-mcp-manager` (the package
+ * this plugin replaces) keeps its servers in
+ * `$DSH_HOME/@wingsky-1/dsh-mcp-manager/mcp.json`, which is one click away from
+ * being re-imported instead of retyped. The bare `mcp-servers.json` name is the
+ * layout the unrelated npm package `dsh-mcp-manager` uses; the rest cover
+ * plausible hand-written placements.
+ *
+ * Nothing is written here — these are read-only import sources, and an import
+ * never overwrites a definition that already exists.
  *
  * @param home - the harness home.
  * @returns absolute candidate paths (existence is checked by the caller).
