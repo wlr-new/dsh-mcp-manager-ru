@@ -176,7 +176,7 @@ draft probe reports tools without being persisted, and that the master switch dr
 - DSH `>= 0.1.5-rc.1` (verified on `0.1.7-rc.2`).
 - Requires the harness-provided `@deepseek-ai/dsh-mcp-client`. If it is missing the plugin still
   boots; the panel and `/probe` report `bridgeError` instead of taking the host down.
-- macOS / Linux / Windows (stdio uses an absolute `command`; on Windows remember the `.cmd` suffix).
+- macOS / Linux / Windows (stdio uses an absolute `command`; on Windows remember the `.cmd` suffix). **Since this version** the `peerDependencies` range explicitly declares compatibility with **DSH 0.2.0-rc.2** (`^0.2.0-rc.2` is now included), so no compatibility warning appears on 0.2.0-rc.2. No functional change.
 
 ## License
 

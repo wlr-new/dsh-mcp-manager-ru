@@ -180,7 +180,7 @@ npm run verify:full      # 可移植性门禁（隔离 DSH_HOME + tarball 安装
 - DSH `>= 0.1.5-rc.1`（在 `0.1.7-rc.2` 上验证通过）。
 - 依赖 harness 内置的 `@deepseek-ai/dsh-mcp-client`；缺失时插件**照常启动**，
   面板与 `/probe` 会如实报告 `bridgeError`，不会把宿主拖下水。
-- Mac / Linux / Windows 均可（stdio 子进程用绝对路径；Windows 下注意给 `command` 加 `.cmd`）。
+- Mac / Linux / Windows 均可（stdio 子进程用绝对路径；Windows 下注意给 `command` 加 `.cmd`）。 **本版起**在 `peerDependencies` 中显式声明兼容 **DSH 0.2.0-rc.2**（官方 DSH 包的版本范围已含 `^0.2.0-rc.2`），在 0.2.0-rc.2 上不会再出现兼容告警；功能与行为无变化。
 
 ## 许可
 
