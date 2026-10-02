@@ -1,6 +1,6 @@
 # dsh-mcp-manager
 
-[English](README.md) · [中文](README.zh.md)
+[English](README.md) · [Русский](README.ru.md)
 
 > **MCP server manager for DeepSeek Harness.** Add, edit, enable and test Model Context Protocol
 > servers from the Web settings page or from agent tools — connected and disconnected **at runtime,
@@ -40,14 +40,14 @@ Two transports: **stdio** (a local child process: `command` / `args` / `env` / `
    Expected: the command ends with a line reading `+ @zhengjunyao/dsh-mcp-manager`, and the profile's
    dependencies and load list both contain it.
 
-2. **Open the “MCP 管理” card** — refresh the Web GUI, open **Settings** in the left sidebar, and find
-   the **MCP 管理** card.
+2. **Open the «Управление MCP» card** — refresh the Web GUI, open **Settings** in the left sidebar, and
+   find the **«Управление MCP»** card.
 
    Expected: the card shows a master switch, the server list, and a phase badge per server
    (`active` / `starting` / `waiting` / `error` / `stopped`).
 
-> 📷 **【Screenshot 2】Starting point: where the “MCP 管理” card lives and what it looks like**
-> How to capture: refresh the Web GUI → Settings in the left sidebar → scroll to the “MCP 管理” card → stop with the whole card visible (title + master switch + server list in one frame)
+> 📷 **[Screenshot 2]Starting point: where the «Управление MCP» card lives and what it looks like**
+> How to capture: refresh the Web GUI → Settings in the left sidebar → scroll to the «Управление MCP» card → stop with the whole card visible (title + master switch + server list in one frame)
 > Redaction: if servers already exist, **blur server names and any local paths in commands**
 > Replace: swap this whole block for `![MCP manager settings card](image-url)`
 
@@ -57,7 +57,7 @@ Two transports: **stdio** (a local child process: `command` / `args` / `env` / `
    Expected: the server appears immediately and its badge moves from `starting` to `active`; on
    failure it stays at `error` with the reason shown next to it.
 
-> 📷 **【Screenshot 3】Key action: the add form and which fields matter**
+> 📷 **[Screenshot 3]Key action: the add form and which fields matter**
 > How to capture: click “Add” → fill the form (name + transport + command/URL) → stop before saving
 > Redaction: **blur local paths, domains and tokens** in the command or URL
 > Replace: swap this whole block for `![Adding an MCP server](image-url)`
@@ -68,7 +68,7 @@ Two transports: **stdio** (a local child process: `command` / `args` / `env` / `
    Expected: tool count > 0, names shaped like `mcp__<name>__<tool>`, and those tools are **callable
    by the agent right away**.
 
-> 📷 **【Screenshot 4】The step people get stuck on: proof that it connected and registered tools**
+> 📷 **[Screenshot 4]The step people get stuck on: proof that it connected and registered tools**
 > How to capture: server in `active` → expand its tool names → stop with **badge, tool count and several `mcp__…__…` names visible at once**
 > Redaction: tool names are usually fine; blur server names and paths if they carry personal data
 > Replace: swap this whole block for `![Server connected with tools registered](image-url)`
@@ -79,14 +79,14 @@ Two transports: **stdio** (a local child process: `command` / `args` / `env` / `
    Expected: a success message, or a failure that names the cause (command not found / port closed /
    auth failed), so you can fix it directly.
 
-> 📷 **【Screenshot 5】End state: one server going from config to usable**
+> 📷 **[Screenshot 5]End state: one server going from config to usable**
 > How to capture: stop at the success message after a test (or at the `mcp_manager_list` result on the agent side)
 > Redaction: none (blur any URL or token)
 > Replace: swap this whole block for `![Test connection succeeded](image-url)`
 
 ## Usage
 
-Web GUI → Settings → **MCP 管理** (MCP manager). The card shows each server's live phase
+Web GUI → Settings → **«Управление MCP»**. The card shows each server's live phase
 (`● connected` / `◌ no tools` / `✖ failed` / `○ not loaded`), its tool count and its tool names,
 and offers a **test** button that really connects — a draft is tried and thrown away, so a typo is
 caught before it is saved.

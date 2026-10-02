@@ -48,7 +48,7 @@ test('normalizeServer accepts the shape the replaced manager package wrote', () 
         enabled: true,
         command: '/opt/homebrew/bin/uvx',
         args: ['garmin-mcp'],
-        description: 'Garmin Connect 个人健康/运动数据（只读；写工具需 GARMIN_WRITE_ENABLED=1，默认关）',
+        description: 'Garmin Connect: личные данные о здоровье и спорте (только чтение; для инструментов записи нужен GARMIN_WRITE_ENABLED=1, по умолчанию выключено)',
       },
     ],
   }
@@ -57,7 +57,7 @@ test('normalizeServer accepts the shape the replaced manager package wrote', () 
   assert.equal(list[0].name, 'garmin')
   assert.equal(list[0].enabled, true)
   assert.deepEqual(list[0].args, ['garmin-mcp'])
-  assert.match(list[0].description, /只读/)
+  assert.match(list[0].description, /только чтение/)
 })
 
 test('normalizeServer tolerates junk field types instead of discarding the server', () => {
@@ -94,14 +94,14 @@ test('validateServer reports every reason a definition cannot connect', () => {
   const good = { ...emptyServer('ok'), command: 'node' }
   assert.deepEqual(validateServer(good), [])
 
-  assert.match(validateServer(emptyServer('')).join('；'), /name 不能为空/)
-  assert.match(validateServer({ ...emptyServer('has space'), command: 'x' }).join('；'), /只能/)
-  assert.match(validateServer({ ...emptyServer('manager'), command: 'x' }).join('；'), /保留名/)
-  assert.match(validateServer({ ...emptyServer('sig'), command: '' }).join('；'), /必须填 command/)
+  assert.match(validateServer(emptyServer('')).join('; '), /не может быть пустым/)
+  assert.match(validateServer({ ...emptyServer('has space'), command: 'x' }).join('; '), /только буквы, цифры/)
+  assert.match(validateServer({ ...emptyServer('manager'), command: 'x' }).join('; '), /зарезервировано/)
+  assert.match(validateServer({ ...emptyServer('sig'), command: '' }).join('; '), /обязательно поле command/)
 
   const http = normalizeServer({ name: 'remote', transport: 'streamable-http' })
   assert.ok(http)
-  assert.match(validateServer(http).join('；'), /必须填 url/)
+  assert.match(validateServer(http).join('; '), /обязательно поле url/)
   assert.deepEqual(validateServer({ ...http, url: 'https://example.com/mcp' }), [])
 })
 

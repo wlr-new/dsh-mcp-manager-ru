@@ -50,13 +50,13 @@ const SECTION_ORDER = 164
 
 /** Model-facing announcement: plugin presence, capabilities, and limits. */
 export const MCP_MANAGER_GUIDANCE =
-  '本机已安装 dsh-mcp-manager 插件（MCP 服务器管理）：可在 Web 设置页「MCP 管理」面板或直接用工具增删改查 MCP 服务器，' +
-  '支持 stdio（command/args/env/cwd）与 streamable-http（url/headers）两种传输，连接与断开都在运行时完成、不需要重启 DSH。' +
-  '服务器提供的工具以 mcp__<服务器名>__<工具名> 形式出现。' +
-  '工具：mcp_manager_status（状态）、mcp_manager_list（列表）、mcp_manager_add（新增并连接）、mcp_manager_update（修改/启停/改名）、' +
-  'mcp_manager_remove（删除，必须先预检并经用户同意）、mcp_manager_test（测试已保存的或草稿定义）、mcp_manager_import（从旧管理插件导入）、' +
-  'mcp_manager_reload（重读配置并重连）。服务器定义存 $DSH_HOME/dsh-mcp-manager.json（0600）。' +
-  '用户提到「MCP / MCP 服务器 / 管理 MCP / 装个 MCP / mcp 工具 / garmin」时即指本插件，请据此协作。'
+  'Установлен плагин dsh-mcp-manager (управление MCP-серверами): добавлять, удалять, изменять и просматривать MCP-серверы можно на панели «Управление MCP» в веб-настройках или напрямую инструментами. ' +
+  'Поддерживаются транспорт stdio (command/args/env/cwd) и streamable-http (url/headers); подключение и отключение выполняются в рантайме, без перезапуска DSH. ' +
+  'Инструменты сервера появляются как mcp__<имя_сервера>__<имя_инструмента>. ' +
+  'Инструменты: mcp_manager_status (статус), mcp_manager_list (список), mcp_manager_add (добавить и подключить), mcp_manager_update (изменить/включить-выключить/переименовать), ' +
+  'mcp_manager_remove (удаление — сначала предпроверка и согласие пользователя), mcp_manager_test (тест сохранённого или чернового определения), mcp_manager_import (импорт из старого менеджера), ' +
+  'mcp_manager_reload (перечитать конфигурацию и переподключиться). Определения серверов хранятся в $DSH_HOME/dsh-mcp-manager.json (0600). ' +
+  'Когда пользователь говорит «MCP / MCP-сервер / управлять MCP / поставить MCP / инструменты mcp / garmin» — речь о этом плагине; ориентируйтесь на это при работе.'
 
 /** Plugin config, read from the composition row. */
 export interface Config {

@@ -91,7 +91,7 @@ function serverRows(snapshot: ManagerSnapshot): Json[] {
 /** Render a compact, human-readable server table. */
 function renderServerTable(snapshot: ManagerSnapshot): string {
   if (snapshot.servers.length === 0) {
-    return '（还没有配置任何 MCP 服务器）'
+    return '(MCP-серверы ещё не настроены)'
   }
   const runtime = new Map(snapshot.runtime.map((view) => [view.name, view]))
   const lines = snapshot.servers.map((server) => {
@@ -100,7 +100,7 @@ function renderServerTable(snapshot: ManagerSnapshot): string {
     const mark = phase === 'active' ? '●' : phase === 'error' ? '✖' : phase === 'starting' || phase === 'waiting' ? '◌' : '○'
     const short = server.transport === 'stdio' ? `${server.command} ${server.args.join(' ')}`.trim() : server.url
     const detail = view?.error != null ? `  ⚠️ ${view.error}` : ''
-    return `${mark} ${server.name}  [${server.transport}]  ${phase}  工具 ${view?.toolCount ?? 0} 个${detail}\n    ${short}`
+    return `${mark} ${server.name}  [${server.transport}]  ${phase}  Инструменты: ${view?.toolCount ?? 0}${detail}\n    ${short}`
   })
   return lines.join('\n')
 }
@@ -122,8 +122,8 @@ function disabled(enabled: () => boolean): OpResult | undefined {
   if (enabled()) return undefined
   return {
     ok: false,
-    message: 'dsh-mcp-manager 已停用（MCP 服务器总开关关闭，或插件在 profile 里被停用）；'
-      + '请在设置页「MCP 管理」重新启用，或把配置文件里的 enabled 改回 true。',
+    message: 'dsh-mcp-manager отключён (главный переключатель MCP-серверов выключен или плагин отключён в профиле); '
+      + 'включите его снова на панели «Управление MCP» в настройках либо верните enabled: true в файле конфигурации.',
   }
 }
 
@@ -132,8 +132,8 @@ export function statusTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_status',
     description:
-      '查看 dsh-mcp-manager 插件状态：共配置了几个 MCP 服务器、几个已连接、各自贡献多少工具、插件是否启用、' +
-      '驱动的 harness MCP 桥从哪里加载、状态文件路径。只读，不连接也不修改任何东西。',
+      'Состояние плагина dsh-mcp-manager: сколько MCP-серверов настроено, сколько подключено, сколько инструментов даёт каждый, ' +
+      'включён ли плагин, откуда загружен harness-MCP-мост, путь к файлу состояния. Только чтение — ничего не подключает и не меняет.',
     parameters: {},
     output: {
       schema: {
@@ -174,19 +174,19 @@ export function statusTool(ctx: ToolContext): ToolDefinition {
       const active = snapshot.runtime.filter((view) => view.phase === 'active').length
       const idle = snapshot.runtime.filter((view) => view.phase === 'waiting' || view.phase === 'starting').length
       const toolCount = snapshot.runtime.reduce((sum, view) => sum + view.toolCount, 0)
-      const bridge = snapshot.bridge !== null ? `${snapshot.bridge.source}（${snapshot.bridge.via}）` : ''
+      const bridge = snapshot.bridge !== null ? `${snapshot.bridge.source} (${snapshot.bridge.via})` : ''
       const lines = [
-        ctx.enabled() ? 'MCP 服务器总开关：开' : 'MCP 服务器总开关：关（服务器已全部断开）',
-        ctx.masterSwitch() ? '' : '（配置文件里的 enabled=false）',
-        `共 ${snapshot.servers.length} 个服务器：已连接 ${active}、未产出工具 ${idle}`,
-        `MCP 工具合计 ${toolCount} 个`,
-        snapshot.bridge !== null ? `MCP 桥 ${bridge}` : 'MCP 桥未加载',
-        snapshot.bridgeError !== null ? `桥加载失败：${snapshot.bridgeError}` : '',
-        `状态文件 ${snapshot.file}`,
+        ctx.enabled() ? 'Главный переключатель MCP-серверов: включён' : 'Главный переключатель MCP-серверов: выключен (все серверы отключены)',
+        ctx.masterSwitch() ? '' : '(в файле конфигурации enabled=false)',
+        `Серверов: ${snapshot.servers.length} — подключено ${active}, без инструментов: ${idle}`,
+        `Инструменты MCP: ${toolCount}`,
+        snapshot.bridge !== null ? `MCP-мост: ${bridge}` : 'MCP-мост не загружен',
+        snapshot.bridgeError !== null ? `Ошибка загрузки моста: ${snapshot.bridgeError}` : '',
+        `Файл состояния: ${snapshot.file}`,
       ].filter((line) => line !== '')
       return {
         ok: snapshot.bridgeError === null,
-        message: `dsh-mcp-manager：${lines.join('；')}。\n${renderServerTable(snapshot)}`,
+        message: `dsh-mcp-manager: ${lines.join('; ')}.\n${renderServerTable(snapshot)}`,
         enabled: ctx.enabled(),
         total: snapshot.servers.length,
         active,
@@ -206,8 +206,9 @@ export function listTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_list',
     description:
-      '列出 dsh-mcp-manager 里配置的全部 MCP 服务器：名称、传输方式、是否启用、当前阶段（active 已连上 / ' +
-      'waiting 未产出工具 / error 失败 / stopped 未加载）、贡献的工具数与完整工具名、以及最近的错误。只读。',
+      'Список всех настроенных в dsh-mcp-manager MCP-серверов: имя, транспорт, включён ли сервер, текущий этап ' +
+      '(active — подключено / waiting — инструменты ещё не получены / error — ошибка / stopped — не загружено), ' +
+      'число инструментов и их полные имена, а также последние ошибки. Только чтение.',
     parameters: {},
     output: {
       schema: {
@@ -240,11 +241,11 @@ export function listTool(ctx: ToolContext): ToolDefinition {
       const snapshot = ctx.manager.snapshot()
       const detail = snapshot.runtime
         .filter((view) => view.tools.length > 0)
-        .map((view) => `${view.name}：${view.tools.join('、')}`)
+        .map((view) => `${view.name}: ${view.tools.join(', ')}`)
         .join('\n')
       return {
         ok: true,
-        message: `${renderServerTable(snapshot)}\n\n${detail === '' ? '（当前没有任何 MCP 工具注册）' : detail}`,
+        message: `${renderServerTable(snapshot)}\n\n${detail === '' ? '(сейчас не зарегистрировано ни одного инструмента MCP)' : detail}`,
         servers: snapshot.servers.map((server) => {
           const view = snapshot.runtime.find((item) => item.name === server.name)
           return {
@@ -267,21 +268,21 @@ export function addTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_add',
     description:
-      '在 dsh-mcp-manager 里新增一个 MCP 服务器并立即连接（无需重启 DSH）。stdio 服务器填 command/args/env/cwd；' +
-      '远程服务器填 transport=streamable-http 与 url/headers。name 会成为工具命名空间：服务器提供的工具将显示为 ' +
-      'mcp__<name>__<工具名>。添加前建议先用 mcp_manager_test 传草稿试连。',
+      'Добавляет новый MCP-сервер в dsh-mcp-manager и сразу подключает его (без перезапуска DSH). Для stdio-сервера укажите ' +
+      'command/args/env/cwd; для удалённого — transport=streamable-http, url/headers. name станет пространством имён инструментов: ' +
+      'инструменты сервера появятся как mcp__<name>__<имя_инструмента>. Перед добавлением рекомендуется проверить соединение черновиком через mcp_manager_test.',
     parameters: {
-      name: { type: 'string', description: '服务器命名空间，只能字母/数字/下划线/连字符，1–32 字符', required: true },
-      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: '传输方式（默认 stdio）' },
-      command: { type: 'string', description: 'stdio：启动命令（如 /opt/homebrew/bin/uvx）' },
-      args: { type: 'array', items: { type: 'string' }, description: 'stdio：命令参数，逐项传递，不经 shell' },
-      env: { type: 'object', additionalProperties: true, description: 'stdio：额外环境变量（键值均为字符串）' },
-      cwd: { type: 'string', description: 'stdio：工作目录（可空）' },
-      url: { type: 'string', description: 'streamable-http：MCP 端点 URL' },
-      headers: { type: 'object', additionalProperties: true, description: 'streamable-http：额外请求头' },
-      description: { type: 'string', description: '备注（仅显示，不进连接配置）' },
-      toolCallTimeoutMs: { type: 'number', description: '单次工具调用超时毫秒数（默认 60000）' },
-      enabled: { type: 'boolean', description: '是否立即启用（默认 true）' },
+      name: { type: 'string', description: 'Пространство имён сервера: только буквы/цифры/подчёркивание/дефис, 1–32 символа', required: true },
+      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: 'Транспорт (по умолчанию stdio)' },
+      command: { type: 'string', description: 'stdio: команда запуска (например, /opt/homebrew/bin/uvx)' },
+      args: { type: 'array', items: { type: 'string' }, description: 'stdio: аргументы команды; передаются по одному, без shell' },
+      env: { type: 'object', additionalProperties: true, description: 'stdio: дополнительные переменные окружения (ключи и значения — строки)' },
+      cwd: { type: 'string', description: 'stdio: рабочая директория (необязательно)' },
+      url: { type: 'string', description: 'streamable-http: URL эндпоинта MCP' },
+      headers: { type: 'object', additionalProperties: true, description: 'streamable-http: дополнительные заголовки запроса' },
+      description: { type: 'string', description: 'Заметка (только для отображения; в настройки подключения не входит)' },
+      toolCallTimeoutMs: { type: 'number', description: 'Таймаут одного вызова инструмента в миллисекундах (по умолчанию 60000)' },
+      enabled: { type: 'boolean', description: 'Включить сразу (по умолчанию true)' },
     },
     output: { schema: OP_OUTPUT, render: renderMessage },
     async execute(args) {
@@ -302,21 +303,21 @@ export function updateTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_update',
     description:
-      '修改 dsh-mcp-manager 里已有的 MCP 服务器：可改 transport/command/args/env/cwd/url/headers/description/' +
-      'toolCallTimeoutMs，也可用 enabled 开关它。改 name 等于改名（会断开旧命名空间再以新名字连上）。只传要改的字段。',
+      'Изменяет существующий MCP-сервер в dsh-mcp-manager: можно поменять transport/command/args/env/cwd/url/headers/description/' +
+      'toolCallTimeoutMs, а также включить или отключить его флагом enabled. Смена name — это переименование (старое пространство имён отключается и сервер подключается под новым именем). Передавайте только те поля, которые нужно изменить.',
     parameters: {
-      name: { type: 'string', description: '要修改的服务器当前名称', required: true },
-      newName: { type: 'string', description: '改成新名称（不填=不改名）' },
-      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: '传输方式' },
-      command: { type: 'string', description: 'stdio：启动命令' },
-      args: { type: 'array', items: { type: 'string' }, description: 'stdio：命令参数' },
-      env: { type: 'object', additionalProperties: true, description: 'stdio：额外环境变量' },
-      cwd: { type: 'string', description: 'stdio：工作目录' },
-      url: { type: 'string', description: 'streamable-http：端点 URL' },
-      headers: { type: 'object', additionalProperties: true, description: 'streamable-http：额外请求头' },
-      description: { type: 'string', description: '备注' },
-      toolCallTimeoutMs: { type: 'number', description: '单次工具调用超时毫秒数' },
-      enabled: { type: 'boolean', description: '启用 / 停用' },
+      name: { type: 'string', description: 'Текущее имя изменяемого сервера', required: true },
+      newName: { type: 'string', description: 'Новое имя (не задавать — без переименования)' },
+      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: 'Транспорт' },
+      command: { type: 'string', description: 'stdio: команда запуска' },
+      args: { type: 'array', items: { type: 'string' }, description: 'stdio: аргументы команды' },
+      env: { type: 'object', additionalProperties: true, description: 'stdio: дополнительные переменные окружения' },
+      cwd: { type: 'string', description: 'stdio: рабочая директория' },
+      url: { type: 'string', description: 'streamable-http: URL эндпоинта' },
+      headers: { type: 'object', additionalProperties: true, description: 'streamable-http: дополнительные заголовки запроса' },
+      description: { type: 'string', description: 'Заметка' },
+      toolCallTimeoutMs: { type: 'number', description: 'Таймаут одного вызова инструмента в миллисекундах' },
+      enabled: { type: 'boolean', description: 'Включить / отключить' },
     },
     output: { schema: OP_OUTPUT, render: renderMessage },
     async execute(args) {
@@ -342,11 +343,11 @@ export function removeTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_remove',
     description:
-      '从 dsh-mcp-manager 删除一个 MCP 服务器并注销它的全部工具。**不传 confirm 时只做预检并返回将被删除的内容，不写任何东西**——' +
-      '请先把预检结果给用户看，得到同意后再传 confirm: true 真正删除。',
+      'Удаляет MCP-сервер из dsh-mcp-manager и снимает с регистрации все его инструменты. **Без параметра confirm выполняется только предпроверка: возвращается то, что будет удалено, — ничего не записывается** — ' +
+      'сначала покажите результат пользователю, а после согласия передайте confirm: true для фактического удаления.',
     parameters: {
-      name: { type: 'string', description: '要删除的服务器名称', required: true },
-      confirm: { type: 'boolean', description: '真正执行必须传 true（表示已获得用户同意）' },
+      name: { type: 'string', description: 'Имя удаляемого сервера', required: true },
+      confirm: { type: 'boolean', description: 'Для фактического удаления передать true (означает, что пользователь согласен)' },
     },
     output: { schema: OP_OUTPUT, render: renderMessage },
     async execute(args) {
@@ -354,7 +355,7 @@ export function removeTool(ctx: ToolContext): ToolDefinition {
       const confirm = (args as Record<string, unknown>).confirm === true
       const target = ctx.manager.server(name)
       if (target === undefined) {
-        return { ok: false, message: `没有名为「${name}」的服务器。`, servers: serverRows(ctx.manager.snapshot()) as never }
+        return { ok: false, message: `Сервер с именем «${name}» не найден.`, servers: serverRows(ctx.manager.snapshot()) as never }
       }
       const view = ctx.manager.snapshot().runtime.find((item) => item.name === name)
       if (!confirm) {
@@ -364,11 +365,11 @@ export function removeTool(ctx: ToolContext): ToolDefinition {
         return {
           ok: true,
           message: [
-            `预检：将删除服务器「${name}」，并注销它当前的 ${view?.toolCount ?? 0} 个工具：`,
-            `  传输：${target.transport}`,
-            `  定义：${detail}`,
-            view !== undefined && view.tools.length > 0 ? `  工具：${view.tools.join('、')}` : '  工具：（无）',
-            '未写任何东西。确认要删就再调用一次并传 confirm: true。',
+            `Предпроверка: будет удалён сервер «${name}», вместе с ним его текущие инструменты (${view?.toolCount ?? 0}):`,
+            `  Транспорт: ${target.transport}`,
+            `  Определение: ${detail}`,
+            view !== undefined && view.tools.length > 0 ? `  Инструменты: ${view.tools.join(', ')}` : '  Инструменты: (нет)',
+            'Ничего не записано. Чтобы удалить — вызовите ещё раз с confirm: true.',
           ].join('\n'),
           servers: serverRows(ctx.manager.snapshot()) as never,
         }
@@ -390,16 +391,16 @@ export function testTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_test',
     description:
-      '测试一个 MCP 服务器能否连上，并列出它提供的工具名。两种用法：传 name 重新连接已保存的那个服务器（会先断开再重连）；' +
-      '或传 name + command/args（或 url）作为**草稿**试连——草稿不会被保存，测完自动断开并恢复原状。加服务器前用它验证最稳。',
+      'Проверяет, можно ли подключиться к MCP-серверу, и перечисляет имена его инструментов. Два варианта: передать name — переподключить сохранённый сервер (сначала отключение, затем повторное подключение); ' +
+      'или передать name + command/args (или url) как **черновик** для пробного подключения — черновик не сохраняется, после теста соединение закрывается и всё возвращается в исходное состояние. Перед добавлением сервера надёжнее проверить его именно так.',
     parameters: {
-      name: { type: 'string', description: '服务器名称（草稿模式下即要用作命名空间的名字）', required: true },
-      draft: { type: 'boolean', description: 'true 时把本次传的字段当作草稿试连，不保存' },
-      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: '草稿：传输方式' },
-      command: { type: 'string', description: '草稿：stdio 启动命令' },
-      args: { type: 'array', items: { type: 'string' }, description: '草稿：stdio 命令参数' },
-      env: { type: 'object', additionalProperties: true, description: '草稿：stdio 额外环境变量' },
-      url: { type: 'string', description: '草稿：streamable-http 端点 URL' },
+      name: { type: 'string', description: 'Имя сервера (в режиме черновика — имя будущего пространства имён)', required: true },
+      draft: { type: 'boolean', description: 'true — пробное подключение переданных полей как черновика, без сохранения' },
+      transport: { type: 'string', enum: ['stdio', 'streamable-http'], description: 'Черновик: транспорт' },
+      command: { type: 'string', description: 'Черновик: команда запуска stdio' },
+      args: { type: 'array', items: { type: 'string' }, description: 'Черновик: аргументы команды stdio' },
+      env: { type: 'object', additionalProperties: true, description: 'Черновик: дополнительные переменные окружения stdio' },
+      url: { type: 'string', description: 'Черновик: URL эндпоинта streamable-http' },
     },
     output: {
       schema: {
@@ -431,12 +432,12 @@ export function testTool(ctx: ToolContext): ToolDefinition {
           return { ok: result.ok, message: result.message, tools: result.tools as never }
         }
         if (!ctx.enabled()) {
-          return { ok: false, message: 'dsh-mcp-manager 已被停用，无法连接。', tools: [] as never }
+          return { ok: false, message: 'dsh-mcp-manager выключен — подключение невозможно.', tools: [] as never }
         }
         const result = await ctx.manager.test(name, undefined)
         return { ok: result.ok, message: result.message, tools: result.tools as never }
       } catch (error) {
-        return { ok: false, message: `测试失败：${describe(error)}`, tools: [] as never }
+        return { ok: false, message: `Ошибка при тестировании: ${describe(error)}`, tools: [] as never }
       }
     },
   })
@@ -447,11 +448,11 @@ export function importTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_import',
     description:
-      '从另一个 MCP 管理插件的配置文件里导入服务器定义（同名不覆盖，导入后按文件里的 enabled 状态连接）。' +
-      '不传 path 时依次尝试 $DSH_HOME/@wingsky-1/dsh-mcp-manager/mcp.json（被本插件取代的那个包的真实位置）、' +
-      '$DSH_HOME/mcp-servers.json、$DSH_HOME/mcp-manager-mcp.json、$DSH_HOME/dsh-mcp-manager/servers.json。',
+      'Импортирует определения серверов из файла конфигурации другого плагина-менеджера MCP (серверы с теми же именами не перезаписываются; после импорта подключение происходит согласно флагу enabled в файле). ' +
+      'Если path не передан, последовательно пробуются $DSH_HOME/@wingsky-1/dsh-mcp-manager/mcp.json (фактическое расположение пакета, который заменяет этот плагин), ' +
+      '$DSH_HOME/mcp-servers.json, $DSH_HOME/mcp-manager-mcp.json, $DSH_HOME/dsh-mcp-manager/servers.json.',
     parameters: {
-      path: { type: 'string', description: '要导入的文件路径（不传=尝试默认位置）' },
+      path: { type: 'string', description: 'Путь к файлу для импорта (не передавать — пробовать стандартные расположения)' },
     },
     output: { schema: OP_OUTPUT, render: renderMessage },
     async execute(args) {
@@ -473,19 +474,19 @@ export function reloadTool(ctx: ToolContext): ToolDefinition {
   return defineTool({
     name: 'mcp_manager_reload',
     description:
-      '重新读取 $DSH_HOME/dsh-mcp-manager.json 并按其中的定义重连（外部手改了配置文件、或想让某个没连上的服务器重试一次时用）。' +
-      '只影响连接，不改配置内容。',
+      'Снова читает $DSH_HOME/dsh-mcp-manager.json и переподключается согласно его определениям (когда файл конфигурации вручную изменён снаружи или нужно повторно попытаться подключиться к не запустившемуся серверу). ' +
+      'Влияет только на подключения; содержимое конфигурации не меняется.',
     parameters: {},
     output: { schema: OP_OUTPUT, render: renderMessage },
     async execute() {
       if (!ctx.enabled()) {
         await ctx.manager.shutdown()
-        return { ok: true, message: 'dsh-mcp-manager 已停用，已断开全部 MCP 服务器。', servers: [] as never }
+        return { ok: true, message: 'dsh-mcp-manager выключен: все MCP-серверы отключены.', servers: [] as never }
       }
       const snapshot = await ctx.manager.refresh()
       return {
         ok: true,
-        message: `已重新读取 ${snapshot.file} 并重连。\n${renderServerTable(snapshot)}`,
+        message: `Перечитан файл ${snapshot.file}, серверы переподключены.\n${renderServerTable(snapshot)}`,
         servers: serverRows(snapshot) as never,
       }
     },

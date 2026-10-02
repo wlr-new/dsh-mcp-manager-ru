@@ -117,7 +117,7 @@ function cleanup() {
     } catch { /* nothing listening */ }
   }
   if (KEEP) {
-    console.log(`\n  （--keep：保留 ${home} 与 profile ${profile}）`)
+    console.log(`\n  (--keep: сохраняем ${home} и профиль ${profile})`)
     return
   }
   try { rmSync(join(home, 'profiles', profile), { recursive: true, force: true, maxRetries: 10, retryDelay: 150 }) } catch { /* leave to the OS */ }
@@ -125,9 +125,9 @@ function cleanup() {
   try { rmSync(bootLogPath, { force: true }) } catch { /* leave to the OS */ }
 }
 
-console.log('dsh-mcp-manager 真实实例端到端验证')
-console.log(`  隔离 home：${home}`)
-console.log(`  fixture：${FIXTURE}`)
+console.log('dsh-mcp-manager: проверка на реальном экземпляре (end-to-end)')
+console.log(`  Изолированный home: ${home}`)
+console.log(`  Фикстура: ${FIXTURE}`)
 
 let base = ''
 
@@ -158,7 +158,7 @@ async function until(what, check, timeoutMs = 45_000) {
     } catch { /* keep polling */ }
     await sleep(500)
   }
-  fail(`等待超时：${what}`)
+  fail(`Тайм-аут ожидания: ${what}`)
   return undefined
 }
 
@@ -168,11 +168,11 @@ function rowOf(state, name) {
 }
 
 try {
-  /* ------------------------------------------------------- 1. 搭建隔离 home */
-  section('1. 搭建隔离 home 与种子配置')
+  /* ---------------------------------------------------- 1. Изолированный home */
+  section('1. Изолированный home и стартовая конфигурация')
   mkdirSync(home, { recursive: true })
   writeFileSync(join(home, 'dsh-mcp-manager.json'), `${JSON.stringify(seeded, null, 2)}\n`, { mode: 0o600 })
-  pass('已写入种子配置', '1 个 stdio 服务器（echo）')
+  pass('Стартовая конфигурация записана', '1 stdio-сервер (echo)')
 
   const dshEnv = { ...process.env, DSH_HOME: home }
   // The `web` template is the only one that carries the web app, and it is the
@@ -182,13 +182,13 @@ try {
   execFileSync(DSH, ['plugin', '--profile', profile, 'add', `link:${process.cwd()}`], { env: dshEnv, stdio: 'ignore' })
   const composed = JSON.parse(readFileSync(join(home, 'profiles', profile, 'package.json'), 'utf8'))
   if ((composed.dsh?.profile?.bundles ?? []).includes('@zhengjunyao/dsh-mcp-manager')) {
-    pass('插件已进入隔离 profile 的 bundles')
+    pass('Плагин добавлен в bundles изолированного профиля')
   } else {
-    fail('插件没进隔离 profile 的 bundles')
+    fail('Плагина нет в bundles изолированного профиля')
   }
 
-  /* --------------------------------------------------- 2. 启动隔离实例 */
-  section('2. 启动隔离实例')
+  /* ------------------------------------------------- 2. Запуск изолированного экземпляра */
+  section('2. Запуск изолированного экземпляра')
   port = await freePort()
   bootFd = openSync(bootLogPath, 'w')
   child = spawn(DSH, ['--profile', profile, '--port', String(port), '--no-open'], {
@@ -203,65 +203,65 @@ try {
     await sleep(300)
   }
   if (!listening) {
-    fail('隔离实例没有监听端口', readBoot().split('\n').slice(-8).join(' | ').slice(0, 400))
+    fail('Изолированный экземпляр не слушает порт', readBoot().split('\n').slice(-8).join(' | ').slice(0, 400))
     throw new Error('boot failed')
   }
   base = `http://127.0.0.1:${port}`
-  pass('隔离实例已监听', base)
+  pass('Изолированный экземпляр слушает порт', base)
 
-  const probe = await until('健康路由就绪', async () => {
+  const probe = await until('маршрут здоровья готов', async () => {
     const response = await fetch(`${base}/api/dsh-mcp-manager/probe`).catch(() => null)
     if (response === null || !response.ok) return undefined
     const body = await response.json()
     return body.ok === true ? body : undefined
   }, 60_000)
-  if (probe !== undefined) pass('插件健康路由可用', `${base}/api/dsh-mcp-manager/probe`)
+  if (probe !== undefined) pass('Маршрут здоровья плагина отвечает', `${base}/api/dsh-mcp-manager/probe`)
   else throw new Error('probe failed')
 
   if (probe.bridge === 'harness' || probe.bridge === 'profile') {
-    pass('MCP 桥从 harness 自身解析', probe.bridge)
+    pass('MCP-мост разрешён из самого harness', probe.bridge)
   } else if (probe.bridge === 'bare') {
-    fail('MCP 桥走了本地依赖而不是 harness 自带的那份', String(probe.bridge))
+    fail('MCP-мост взят из локальных зависимостей, а не из поставки harness', String(probe.bridge))
   } else {
-    fail('MCP 桥没有加载', String(probe.bridgeError))
+    fail('MCP-мост не загружен', String(probe.bridgeError))
   }
 
-  /* -------------------------------------------- 3. agent 工具真的挂上了 */
-  section('3. 验证 mcp_manager_* 工具已注册')
-  const managerTools = await until('agent 工具出现', async () => {
+  /* --------------------------------------- 3. Инструменты agent действительно зарегистрированы */
+  section('3. Проверка регистрации инструментов mcp_manager_*')
+  const managerTools = await until('появление инструментов agent', async () => {
     const body = await getJson('/api/dsh-mcp-manager/probe')
     return body.managerToolCount >= 8 ? body.managerTools : undefined
   }, 30_000)
   if (managerTools !== undefined) {
-    pass(`已注册 ${managerTools.length} 个 agent 工具`, managerTools.join('、'))
+    pass(`Зарегистрировано инструментов agent: ${managerTools.length}`, managerTools.join(', '))
     for (const expected of ['mcp_manager_status', 'mcp_manager_add', 'mcp_manager_remove', 'mcp_manager_test']) {
-      if (managerTools.includes(expected)) pass(`  ${expected} 在册`)
-      else fail(`  ${expected} 缺失`)
+      if (managerTools.includes(expected)) pass(`  ${expected} на месте`)
+      else fail(`  ${expected} не найден`)
     }
   }
 
-  /* ------------------------------------- 4. 种子服务器真的连上并给出工具 */
-  section('4. 验证种子服务器已连接并注册工具')
-  const live = await until('echo 变为 active', async () => {
+  /* ------------------------------- 4. Стартовый сервер подключён и выдал инструменты */
+  section('4. Проверка подключения стартового сервера и регистрации инструментов')
+  const live = await until('echo переходит в active', async () => {
     const body = await getJson('/api/dsh-mcp-manager/state')
     const row = rowOf(body, 'echo')
     return row?.phase === 'active' ? row : undefined
   }, 45_000)
   if (live !== undefined) {
-    pass('种子服务器已连接', `phase=${live.phase}`)
+    pass('Стартовый сервер подключён', `phase=${live.phase}`)
     const names = live.tools ?? []
     if (names.includes('mcp__echo__echo') && names.includes('mcp__echo__add')) {
-      pass('工具以 mcp__echo__* 注册', names.join('、'))
+      pass('Инструменты зарегистрированы как mcp__echo__*', names.join(', '))
     } else {
-      fail('工具名不符', JSON.stringify(names))
+      fail('Имена инструментов не совпадают', JSON.stringify(names))
     }
   } else {
     const body = await getJson('/api/dsh-mcp-manager/state').catch(() => null)
-    fail('种子服务器没有连上', JSON.stringify(rowOf(body, 'echo') ?? body).slice(0, 300))
+    fail('Стартовый сервер не подключился', JSON.stringify(rowOf(body, 'echo') ?? body).slice(0, 300))
   }
 
-  /* -------------------------------- 5. 运行时增删启停（不需要重启） */
-  section('5. 运行时新增 / 停用 / 删除（验证无需重启）')
+  /* ----------------------------- 5. Добавление / отключение / удаление в рантайме (без перезапуска) */
+  section('5. Добавление / отключение / удаление в рантайме (проверка "без перезапуска")')
   const added = await postJson('/api/dsh-mcp-manager/server', {
     server: {
       name: 'echo2',
@@ -271,41 +271,41 @@ try {
       args: [FIXTURE, 'fixture-echo-2'],
     },
   })
-  if (added.body.ok === true) pass('HTTP 新增第二个服务器成功')
-  else fail('新增失败', JSON.stringify(added.body).slice(0, 300))
+  if (added.body.ok === true) pass('Второй сервер добавлен через HTTP')
+  else fail('Ошибка добавления', JSON.stringify(added.body).slice(0, 300))
 
-  const live2 = await until('echo2 变为 active', async () => {
+  const live2 = await until('echo2 переходит в active', async () => {
     const body = await getJson('/api/dsh-mcp-manager/state')
     const row = rowOf(body, 'echo2')
     return row?.phase === 'active' ? row : undefined
   }, 45_000)
   if (live2 !== undefined) {
     const names = live2.tools ?? []
-    if (names.includes('mcp__echo2__echo')) pass('新服务器的工具已注册', names.join('、'))
-    else fail('新服务器的工具名不符', JSON.stringify(names))
+    if (names.includes('mcp__echo2__echo')) pass('Инструменты нового сервера зарегистрированы', names.join(', '))
+    else fail('Имена инструментов нового сервера не совпадают', JSON.stringify(names))
   }
 
   const off = await postJson('/api/dsh-mcp-manager/server/toggle', { name: 'echo2', enabled: false })
-  if (off.body.ok === true) pass('停用请求成功')
-  else fail('停用失败', JSON.stringify(off.body).slice(0, 200))
-  const gone = await until('echo2 的工具消失', async () => {
+  if (off.body.ok === true) pass('Запрос отключения выполнен')
+  else fail('Ошибка отключения', JSON.stringify(off.body).slice(0, 200))
+  const gone = await until('исчезновение инструментов echo2', async () => {
     const body = await getJson('/api/dsh-mcp-manager/state')
     const row = rowOf(body, 'echo2')
     return row !== undefined && (row.tools ?? []).length === 0 ? row : undefined
   }, 20_000)
-  if (gone !== undefined) pass('停用后其 MCP 工具已注销', `phase=${gone.phase}`)
+  if (gone !== undefined) pass('После отключения его MCP-инструменты сняты с регистрации', `phase=${gone.phase}`)
 
   const removed = await postJson('/api/dsh-mcp-manager/server/remove', { name: 'echo2' })
-  if (removed.body.ok === true) pass('删除请求成功')
-  else fail('删除失败', JSON.stringify(removed.body).slice(0, 200))
-  const absent = await until('echo2 从列表消失', async () => {
+  if (removed.body.ok === true) pass('Запрос удаления выполнен')
+  else fail('Ошибка удаления', JSON.stringify(removed.body).slice(0, 200))
+  const absent = await until('исчезновение echo2 из списка', async () => {
     const body = await getJson('/api/dsh-mcp-manager/state')
     return (body.servers ?? []).some((server) => server.name === 'echo2') ? undefined : body
   }, 20_000)
-  if (absent !== undefined) pass('删除后配置里已无 echo2')
+  if (absent !== undefined) pass('После удаления echo2 нет в конфигурации')
 
-  /* ------------------------------------------------- 6. 草稿试连不落盘 */
-  section('6. 验证草稿试连（测试不保存）')
+  /* --------------------------------------------- 6. Пробное подключение черновика не записывается на диск */
+  section('6. Проверка пробного подключения черновика (тест не сохраняет)')
   const draft = await postJson('/api/dsh-mcp-manager/test', {
     name: 'draftprobe',
     server: {
@@ -316,57 +316,57 @@ try {
       args: [FIXTURE, 'fixture-draft'],
     },
   })
-  if (draft.body.ok === true) pass('草稿试连成功', String(draft.body.message).slice(0, 120))
-  else fail('草稿试连失败', JSON.stringify(draft.body).slice(0, 300))
+  if (draft.body.ok === true) pass('Пробное подключение черновика удалось', String(draft.body.message).slice(0, 120))
+  else fail('Пробное подключение черновика не удалось', JSON.stringify(draft.body).slice(0, 300))
   const afterDraft = await getJson('/api/dsh-mcp-manager/state')
   if ((afterDraft.servers ?? []).some((server) => server.name === 'draftprobe')) {
-    fail('草稿被写进了配置（不应该）')
+    fail('Черновик записан в конфигурацию (не должно быть)')
   } else {
-    pass('草稿没有落盘')
+    pass('Черновик на диск не записан')
   }
   if ((afterDraft.runtime ?? []).some((view) => (view.tools ?? []).some((name) => name.startsWith('mcp__draftprobe__')))) {
-    fail('草稿的工具没有被收回')
+    fail('Инструменты черновика не отозваны')
   } else {
-    pass('草稿的工具已被收回')
+    pass('Инструменты черновика отозваны')
   }
-  if (rowOf(afterDraft, 'echo')?.phase === 'active') pass('草稿试连后原服务器已恢复连接')
-  else fail('草稿试连破坏了原服务器', JSON.stringify(rowOf(afterDraft, 'echo')))
+  if (rowOf(afterDraft, 'echo')?.phase === 'active') pass('После пробного подключения исходный сервер снова подключён')
+  else fail('Пробное подключение нарушило исходный сервер', JSON.stringify(rowOf(afterDraft, 'echo')))
 
-  /* ------------------------------------------- 7. MCP 服务器总开关 */
-  section('7. 验证 MCP 服务器总开关（设置页的停用）')
+  /* ------------------------------------ 7. Главный переключатель MCP-серверов (отключение со страницы настроек) */
+  section('7. Проверка главного переключателя MCP-серверов (отключение со страницы настроек)')
   const disabled = await postJson('/api/dsh-mcp-manager/config', { enabled: false })
-  if (disabled.body.ok === true) pass('已关闭总开关')
-  else fail('关闭总开关失败', JSON.stringify(disabled.body).slice(0, 200))
-  const drained = await until('关闭后 mcp__* 工具全部注销', async () => {
+  if (disabled.body.ok === true) pass('Главный переключатель выключен')
+  else fail('Не удалось выключить главный переключатель', JSON.stringify(disabled.body).slice(0, 200))
+  const drained = await until('после выключения все инструменты mcp__* сняты с регистрации', async () => {
     const body = await getJson('/api/dsh-mcp-manager/probe')
     // The server tools must go; the management surface stays so the state can
     // still be inspected and switched back on.
     return body.toolCount === 0 && body.serving === false && body.managerToolCount >= 8 ? body : undefined
   }, 20_000)
   if (drained !== undefined) {
-    pass('关闭后 mcp__* 已注销，管理工具仍在', `toolCount=${drained.toolCount} managerTools=${drained.managerToolCount}`)
+    pass('mcp__* сняты с регистрации, управляющие инструменты на месте', `toolCount=${drained.toolCount} managerTools=${drained.managerToolCount}`)
   }
 
   const reenabled = await postJson('/api/dsh-mcp-manager/config', { enabled: true })
-  if (reenabled.body.ok === true) pass('已重新打开总开关')
-  const restored = await until('重新打开后工具回来', async () => {
+  if (reenabled.body.ok === true) pass('Главный переключатель снова включён')
+  const restored = await until('возврат инструментов после включения', async () => {
     const body = await getJson('/api/dsh-mcp-manager/probe')
     return body.toolCount >= 2 && body.serving === true ? body : undefined
   }, 30_000)
-  if (restored !== undefined) pass('重新打开后服务器与 MCP 工具均已恢复', `toolCount=${restored.toolCount}`)
+  if (restored !== undefined) pass('После включения серверы и MCP-инструменты восстановлены', `toolCount=${restored.toolCount}`)
   const restoredState = await getJson('/api/dsh-mcp-manager/state')
-  if (rowOf(restoredState, 'echo')?.phase === 'active') pass('恢复后 echo 重新连上', 'phase=active')
+  if (rowOf(restoredState, 'echo')?.phase === 'active') pass('После восстановления echo снова подключён', 'phase=active')
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
-  if (!['boot failed', 'probe failed'].includes(message)) fail('脚本异常', message)
+  if (!['boot failed', 'probe failed'].includes(message)) fail('Сбой скрипта', message)
 } finally {
   cleanup()
 }
 
-console.log('\n结论\n')
+console.log('\nИтог\n')
 if (failures === 0) {
-  console.log('  ✅ 真实实例端到端验证通过：配置 → MCP 桥 → 真实 stdio 服务器 → mcp__* 工具，且增删启停全程无需重启')
+  console.log('  ✅ Проверка на реальном экземпляре пройдена: конфигурация → MCP-мост → реальный stdio-сервер → инструменты mcp__*, при этом добавление/отключение/удаление работали без перезапуска')
 } else {
-  console.log(`  ❌ 未通过：${failures} 项失败`)
+  console.log(`  ❌ Провалено проверок: ${failures}`)
 }
 process.exit(failures === 0 ? 0 : 1)

@@ -29,7 +29,7 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
-    "README.zh.md",
+    "README.ru.md",
     "CHANGELOG.md",
     "LICENSE",
     "PORTABILITY-SOP.md"
@@ -44,7 +44,7 @@
     "mcp-server",
     "stdio",
     "streamable-http",
-    "MCP管理"
+    "управление MCP"
   ],
   "license": "MIT",
   "repository": {
