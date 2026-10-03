@@ -286,7 +286,7 @@ if (!options.skipAudit) {
 /* --------------------------------------------------------------- 2. Упаковка */
 
 section('2. Упаковка')
-// --ignore-scripts: `prepare` льёт логи сборки в stdout и портит вывод --json (собирать — дело вызывающей стороны)
+// --ignore-scripts: `prepack` льёт логи сборки в stdout и портит вывод --json (собирать — дело вызывающей стороны)
 const pack = run('npm', ['pack', '--json', '--ignore-scripts'], { cwd: options.cwd })
 if (!pack.ok) {
   fail('Ошибка npm pack', pack.stderr.trim().slice(0, 300))

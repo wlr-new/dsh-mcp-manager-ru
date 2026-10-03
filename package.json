@@ -66,7 +66,7 @@
     "verify:quick": "node scripts/portability.mjs --skip-audit --stability 5 --health /api/dsh-mcp-manager/probe",
     "verify:full": "node scripts/portability.mjs --health /api/dsh-mcp-manager/probe",
     "verify:live": "node scripts/live-verify.mjs",
-    "prepare": "npm run build",
+    "prepack": "npm run build",
     "release:check": "node scripts/release.mjs --check",
     "release": "node scripts/release.mjs --bump auto --publish --yes"
   },
